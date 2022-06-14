@@ -405,7 +405,7 @@ def move_data(pose_data, hand_data, right=False):
 
     return hand_data
 
-def create_animation (file_pose, file_left, file_right, name="", sample_rate=1):
+def create_animation (file_pose, file_left, file_right, name="", sample_rate=1, target_avatar="Armature"):
     # Create the arrays of data for the landmarks
     data_pose = csv_to_arrays(file_pose, target="pose")
     data_left = move_data(data_pose, csv_to_arrays(file_left, target="hand"))
@@ -425,38 +425,11 @@ def create_animation (file_pose, file_left, file_right, name="", sample_rate=1):
 
     # TODO: Merge armatures
 
-    map_rotation(mapping=pose_point_mapping_readyplayerme, source_armature=f"armature_{name}", target_rig="Armature", last_char=f"_{name}")
-    map_rotation(mapping=left_hand_point_mapping_readyplayerme, source_armature=f"armature_{name}_l", target_rig="Armature", last_char=f"_{name}_l")
-    map_rotation(mapping=right_hand_point_mapping_readyplayerme, source_armature=f"armature_{name}_r", target_rig="Armature", last_char=f"_{name}_r")
+    map_rotation(mapping=pose_point_mapping_readyplayerme, source_armature=f"armature_{name}", target_rig=target_avatar, last_char=f"_{name}")
+    map_rotation(mapping=left_hand_point_mapping_readyplayerme, source_armature=f"armature_{name}_l", target_rig=target_avatar, last_char=f"_{name}_l")
+    map_rotation(mapping=right_hand_point_mapping_readyplayerme, source_armature=f"armature_{name}_r", target_rig=target_avatar, last_char=f"_{name}_r")
 
 create_animation("mediapipe_data/POSELandmarks.csv",
                  "mediapipe_data/LEFT_HandLandmarks.csv",
                  "mediapipe_data/RIGHT_HandLandmarks.csv",
                  name="main", sample_rate=3)
-
-
-# create_armature(name="hand", last_char="_r")
-# input_data = csv_to_arrays("mediapipe_data/LEFT_HandLandmarks.csv")
-# # Maak de landmarks in de scene
-# create_landmarks(input_data, last_char="_l", sample_rate=1)
-
-# input_data = csv_to_arrays("mediapipe_data/RIGHT_HandLandmarks.csv")
-# create_landmarks(input_data, last_char="_r", sample_rate=1)
-
-# # Maak arrays van de csv data
-# input_data = csv_to_arrays("mediapipe_data/POSELandmarks.csv", target="pose")
-# input_data = create_virtual_landmark_data(input_data, target="pose")
-# create_landmarks(input_data, sample_rate=3)
-
-
-# # Maak de bone structure die bij de punten hoort.
-# create_armature(target="hand", last_char="_l")
-# create_armature(target="hand", last_char="_r")
-# create_armature(target="pose")
-
-# # map_rotation(mapping=pose_point_mapping_readyplayerme, source_armature="motion_capture_armature")
-# # map_rotation(mapping=left_hand_point_mapping_readyplayerme, source_armature="motion_capture_armature_l")
-# # map_rotation(mapping=right_hand_point_mapping_readyplayerme, source_armature="motion_capture_armature_r")
-# map_rotation(mapping=pose_point_mapping_metahuman, source_armature="motion_capture_armature", target_rig="f_med_nrw_body")
-# map_rotation(mapping=left_hand_point_mapping_metahuman2, source_armature="motion_capture_armature_l", target_rig="f_med_nrw_body")
-# map_rotation(mapping=right_hand_point_mapping_metahuman2, source_armature="motion_capture_armature_r", target_rig="f_med_nrw_body")

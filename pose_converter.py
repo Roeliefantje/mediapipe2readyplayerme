@@ -152,39 +152,39 @@ pose_point_mapping_readyplayerme = [
 ]
 
 left_hand_point_mapping_readyplayerme = [
-    ("THUMB_0_l", "LeftHandThumb1"),
-    ("THUMB_CMC_l", "LeftHandThumb2"),
-    ("THUMB_MCP_l", "LeftHandThumb3"),
-    ("INDEX_FINGER_MCP_l", "LeftHandIndex1"),
-    ("INDEX_FINGER_PIP_l", "LeftHandIndex2"),
-    ("INDEX_FINGER_DIP_l", "LeftHandIndex3"),
-    ("MIDDLE_FINGER_MCP_l", "LeftHandMiddle1"),
-    ("MIDDLE_FINGER_PIP_l", "LeftHandMiddle2"),
-    ("MIDDLE_FINGER_DIP_l", "LeftHandMiddle3"),
-    ("RING_FINGER_MCP_l", "LeftHandRing1"),
-    ("RING_FINGER_PIP_l", "LeftHandRing2"),
-    ("RING_FINGER_DIP_l", "LeftHandRing3"),
-    ("PINKY_MCP_l", "LeftHandPinky1"),
-    ("PINKY_PIP_l", "LeftHandPinky2"),
-    ("PINKY_DIP_l", "LeftHandPinky3")
+    ("THUMB_0", "LeftHandThumb1"),
+    ("THUMB_CMC", "LeftHandThumb2"),
+    ("THUMB_MCP", "LeftHandThumb3"),
+    ("INDEX_FINGER_MCP", "LeftHandIndex1"),
+    ("INDEX_FINGER_PIP", "LeftHandIndex2"),
+    ("INDEX_FINGER_DIP", "LeftHandIndex3"),
+    ("MIDDLE_FINGER_MCP", "LeftHandMiddle1"),
+    ("MIDDLE_FINGER_PIP", "LeftHandMiddle2"),
+    ("MIDDLE_FINGER_DIP", "LeftHandMiddle3"),
+    ("RING_FINGER_MCP", "LeftHandRing1"),
+    ("RING_FINGER_PIP", "LeftHandRing2"),
+    ("RING_FINGER_DIP", "LeftHandRing3"),
+    ("PINKY_MCP", "LeftHandPinky1"),
+    ("PINKY_PIP", "LeftHandPinky2"),
+    ("PINKY_DIP", "LeftHandPinky3")
 ]
 
 right_hand_point_mapping_readyplayerme = [
-    ("THUMB_0_r", "RightHandThumb1"),
-    ("THUMB_CMC_r", "RightHandThumb2"),
-    ("THUMB_MCP_r", "RightHandThumb3"),
-    ("INDEX_FINGER_MCP_r", "RightHandIndex1"),
-    ("INDEX_FINGER_PIP_r", "RightHandIndex2"),
-    ("INDEX_FINGER_DIP_r", "RightHandIndex3"),
-    ("MIDDLE_FINGER_MCP_r", "RightHandMiddle1"),
-    ("MIDDLE_FINGER_PIP_r", "RightHandMiddle2"),
-    ("MIDDLE_FINGER_DIP_r", "RightHandMiddle3"),
-    ("RING_FINGER_MCP_r", "RightHandRing1"),
-    ("RING_FINGER_PIP_r", "RightHandRing2"),
-    ("RING_FINGER_DIP_r", "RightHandRing3"),
-    ("PINKY_MCP_r", "RightHandPinky1"),
-    ("PINKY_PIP_r", "RightHandPinky2"),
-    ("PINKY_DIP_r", "RightHandPinky3")
+    ("THUMB_0", "RightHandThumb1"),
+    ("THUMB_CMC", "RightHandThumb2"),
+    ("THUMB_MCP", "RightHandThumb3"),
+    ("INDEX_FINGER_MCP", "RightHandIndex1"),
+    ("INDEX_FINGER_PIP", "RightHandIndex2"),
+    ("INDEX_FINGER_DIP", "RightHandIndex3"),
+    ("MIDDLE_FINGER_MCP", "RightHandMiddle1"),
+    ("MIDDLE_FINGER_PIP", "RightHandMiddle2"),
+    ("MIDDLE_FINGER_DIP", "RightHandMiddle3"),
+    ("RING_FINGER_MCP", "RightHandRing1"),
+    ("RING_FINGER_PIP", "RightHandRing2"),
+    ("RING_FINGER_DIP", "RightHandRing3"),
+    ("PINKY_MCP", "RightHandPinky1"),
+    ("PINKY_PIP", "RightHandPinky2"),
+    ("PINKY_DIP", "RightHandPinky3")
 ]
 
 
@@ -192,7 +192,7 @@ right_hand_point_mapping_readyplayerme = [
 readyplayerme_mapping = pose_point_mapping_readyplayerme + left_hand_point_mapping_readyplayerme + right_hand_point_mapping_readyplayerme
 
 
-def map_rotation(source_armature="motion_capture_armature", target_rig="Armature", mapping=pose_point_mapping_readyplayerme):
+def map_rotation(source_armature="motion_capture_armature", target_rig="Armature", mapping=pose_point_mapping_readyplayerme, last_char=""):
 
 
     for map in mapping:
@@ -201,7 +201,7 @@ def map_rotation(source_armature="motion_capture_armature", target_rig="Armature
         # The target of the copy rotation is the armature of the motion capture
         rotation_copy_constr.target = bpy.data.objects[source_armature]
         # This is set just by a string value of the subtargets name
-        rotation_copy_constr.subtarget = map[0]
+        rotation_copy_constr.subtarget = map[0] + last_char
 
 
         rotation_copy_constr.target_space = 'WORLD'
@@ -308,14 +308,14 @@ def create_armature(name="motion_capture_armature", last_char = "", target="hand
     for tuple in array:
         # parent_name = tuple[0] + last_char
         # child_name = tuple[1] + last_char
-        parent_name = tuple[0]
-        child_name = tuple[1]
+        parent_name = tuple[0] + last_char
+        child_name = tuple[1] + last_char
 
         # If bone_name is specified use that name instead.
         bone_name = parent_name
         if len(tuple) == 3:
             # bone_name = tuple[2] + last_char
-            bone_name = tuple[2]
+            bone_name = tuple[2] + last_char
 
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.armature.bone_primitive_add(name=bone_name)
@@ -425,9 +425,9 @@ def create_animation (file_pose, file_left, file_right, name="", sample_rate=1):
 
     # TODO: Merge armatures
 
-    map_rotation(mapping=pose_point_mapping_readyplayerme, source_armature=f"armature_{name}", target_rig="Armature")
-    map_rotation(mapping=left_hand_point_mapping_readyplayerme, source_armature=f"armature_{name}_l", target_rig="Armature")
-    map_rotation(mapping=right_hand_point_mapping_readyplayerme, source_armature=f"armature_{name}_r", target_rig="Armature")
+    map_rotation(mapping=pose_point_mapping_readyplayerme, source_armature=f"armature_{name}", target_rig="Armature", last_char=f"_{name}")
+    map_rotation(mapping=left_hand_point_mapping_readyplayerme, source_armature=f"armature_{name}_l", target_rig="Armature", last_char=f"_{name}_l")
+    map_rotation(mapping=right_hand_point_mapping_readyplayerme, source_armature=f"armature_{name}_r", target_rig="Armature", last_char=f"_{name}_r")
 
 create_animation("mediapipe_data/POSELandmarks.csv",
                  "mediapipe_data/LEFT_HandLandmarks.csv",

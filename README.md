@@ -5,7 +5,8 @@ It creates an animation which can be exported to be used in different 3D softwar
 ## How to use the repository
 1. Create a blender file in the repository.
 2. Re-open this blender file in the repository in order to fix script path issues.
-3. Open the scripts inside of blender.
+3. Import a ReadyPlayerMe avatar into the blender scene.
+4. Open the scripts inside of blender.
 
 ### Using the pose_converter.py
 1. Import the csv files into the mediapipe_data folder.

@@ -2,10 +2,11 @@
 
 import bpy
 import csv
-# import numpy as np
+from mathutils import Vector
+from mathutils import Matrix
 
-# from mathutils import Quaternion
 
+# The bone structure of the hand that is created from the mediapipe landmarks.
 hand_bone_structure_mp = [
     ("WRIST", "THUMB_CMC", "THUMB_0"),
         ("THUMB_CMC", "THUMB_MCP"),
@@ -33,8 +34,7 @@ hand_bone_structure_mp = [
                 ("PINKY_DIP", "PINKY_TIP")
 ]
 
-
-
+# The bone structure of the legs of the mediapipe landmarks.
 under_bone_structure_mp = [
     ("RIGHT_HIP", "RIGHT_KNEE", "RIGHT_LEG"),
     ("LEFT_HIP", "LEFT_KNEE", "LEFT_LEG"),
@@ -46,14 +46,12 @@ under_bone_structure_mp = [
     ("LEFT_HEEL", "LEFT_FOOT_INDEX")
 ]
 
+# The bone structure of the upper body of the mediapipe landmarks.
 upper_bone_structure_mp = [
     ("LEFT_SHOULDER", "LEFT_ELBOW"),
     ("LEFT_ELBOW", "LEFT_WRIST"),
     ("RIGHT_SHOULDER", "RIGHT_ELBOW"),
     ("RIGHT_ELBOW", "RIGHT_WRIST"),
-
-    # ("RIGHT_WRIST", "RIGHT_INDEX"), # hand bone right
-    # ("LEFT_WRIST", "LEFT_INDEX"), # hand bone left
     ("SPINE_TOP", "LEFT_SHOULDER", "LEFT_CLAVICLE"),
     ("SPINE_TOP", "RIGHT_SHOULDER", "RIGHT_CLAVICLE"),
     ("SPINE_BOTTOM", "SPINE_TOP", "SPINE"),
@@ -64,6 +62,7 @@ upper_bone_structure_mp = [
 pose_bone_structure_mp = under_bone_structure_mp + upper_bone_structure_mp
 
 # Index of every bone in the mediapipe representation of hand
+# https://google.github.io/mediapipe/solutions/hands.html
 hand_media_pipe_index = [
     ("WRIST", 0),
     ("THUMB_CMC", 1),
@@ -125,6 +124,7 @@ pose_media_pipe_index = [
     ("RIGHT_FOOT_INDEX", 32)
 ]
 
+# Virtual landmarks created to make the complete skeleton
 pose_virtual_landmarks= [
     ("SPINE_BOTTOM", "LEFT_HIP", "RIGHT_HIP"),
     ("SPINE_TOP", "LEFT_SHOULDER", "RIGHT_SHOULDER"),
@@ -134,23 +134,22 @@ pose_virtual_landmarks= [
 pose_point_mapping_readyplayerme = [
     ("LEFT_SHOULDER", "LeftArm"),
     ("LEFT_ELBOW", "LeftForeArm"),
-    ("LEFT_WRIST", "LeftHand"),
+    # ("LEFT_WRIST", "LeftHand"),
     ("RIGHT_SHOULDER", "RightArm"),
     ("RIGHT_ELBOW", "RightForeArm"),
-    ("RIGHT_WRIST", "RightHand"),
-    ("RIGHT_CLAVICLE", "RightShoulder"),
-    ("LEFT_CLAVICLE", "LeftShoulder"),
+    # ("RIGHT_WRIST", "RightHand"),
+    # ("RIGHT_CLAVICLE", "RightShoulder"), # These mess up the animation for some reason
+    # ("LEFT_CLAVICLE", "LeftShoulder"),  # These mess up the animation for some reason
     ("SPINE", "Hips"),
     ("RIGHT_LEG", "RightUpLeg"),
     ("LEFT_LEG", "LeftUpLeg"),
     ("RIGHT_KNEE", "RightLeg"),
     ("LEFT_KNEE", "LeftLeg"),
     ("RIGHT_ANKLE", "RightFoot"),
-    ("LEFT_ANKLE", "LeftFoot"),
-    # ("LEFT_WRIST", "LeftHand"),
-    # ("RIGHT_WRIST", "RightHand")
+    ("LEFT_ANKLE", "LeftFoot")
 ]
 
+# The mapping for the hands to the readyplayerme avatar.
 left_hand_point_mapping_readyplayerme = [
     ("THUMB_0", "LeftHandThumb1"),
     ("THUMB_CMC", "LeftHandThumb2"),
@@ -169,6 +168,7 @@ left_hand_point_mapping_readyplayerme = [
     ("PINKY_DIP", "LeftHandPinky3")
 ]
 
+# The mapping for the hands to the readyplayerme avatar.
 right_hand_point_mapping_readyplayerme = [
     ("THUMB_0", "RightHandThumb1"),
     ("THUMB_CMC", "RightHandThumb2"),
@@ -192,12 +192,13 @@ right_hand_point_mapping_readyplayerme = [
 readyplayerme_mapping = pose_point_mapping_readyplayerme + left_hand_point_mapping_readyplayerme + right_hand_point_mapping_readyplayerme
 
 
+# Creates constraints to copy the rotation of the mediapipe skeleton onto the readyplayerme avatar.
 def map_rotation(source_armature="motion_capture_armature", target_rig="Armature", mapping=pose_point_mapping_readyplayerme, last_char=""):
 
 
     for map in mapping:
         rotation_copy_constr = bpy.data.objects[target_rig].pose.bones[map[1]].constraints.new(type='TRANSFORM')
-        # rotation_copy_constr = bpy.data.objects[target_rig].children[1].pose.bones[map[1]].constraints.new(type='COPY_ROTATION')
+        # rotation_copy_constr = bpy.data.objects[target_rig].pose.bones[map[1]].constraints.new(type='COPY_ROTATION')
         # The target of the copy rotation is the armature of the motion capture
         rotation_copy_constr.target = bpy.data.objects[source_armature]
         # This is set just by a string value of the subtargets name
@@ -226,7 +227,7 @@ def map_rotation(source_armature="motion_capture_armature", target_rig="Armature
 
 
 
-
+# Check if the object exists.
 def isObjectInScene(name):
     for o in bpy.context.scene.objects:
         if o.name == name:
@@ -234,6 +235,7 @@ def isObjectInScene(name):
 
     return False
 
+# Input the landmarks into the blender scene by creating objects representing them.
 def create_landmarks(data, last_char = "", sample_rate=1):
     for tupl in data:
         name, locations = tupl
@@ -265,7 +267,7 @@ def create_landmarks(data, last_char = "", sample_rate=1):
                 obj.location = [x, y, z]
                 obj.keyframe_insert(data_path='location', frame=idx)
 
-# Create virtual landmark data for spine locations
+# Create virtual landmark data for the spine.
 def create_virtual_landmark_data(data, target="pose"):
     if target != "pose":
         return
@@ -292,22 +294,18 @@ def create_virtual_landmark_data(data, target="pose"):
 
     return data
 
-
+# Create the armature from the mediapipe motion capture data.
 def create_armature(name="motion_capture_armature", last_char = "", target="hand", left_hand=True):
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.ops.object.armature_add()
     armature = bpy.context.active_object
     armature.name = name + last_char
-    # armature.pose.bones[0].delete()
-    # armature.data.edit_bones.remove(armature.data.edit_bones[0])
 
     array = hand_bone_structure_mp
     if(target == "pose"):
         array = pose_bone_structure_mp
 
     for tuple in array:
-        # parent_name = tuple[0] + last_char
-        # child_name = tuple[1] + last_char
         parent_name = tuple[0] + last_char
         child_name = tuple[1] + last_char
 
@@ -336,8 +334,6 @@ def create_armature(name="motion_capture_armature", last_char = "", target="hand
         bone_constraint.rest_length = 1.0
         bone_constraint.volume = 'NO_VOLUME'
         bone_constraint.keep_axis = 'PLANE_Z'
-        # bone_constraint = armature.pose.bones[child_name].constraints.new('CHILD_OF')
-        # bone_constraint.target = bpy.data.objects[parent_name]
 
 
 # Outputs list of tuple with bone name and array of locations
@@ -384,10 +380,9 @@ def csv_to_arrays(csv_file, target="hand"):
 
     return output
 
-def rotate_bvh_armatures(armature="f_med_nrw_body"):
-    bpy.data.objects[armature].rotation_euler[0] = -3.66519 # -210d
 
-
+# Move the hand data to the position of the wrists by using the wrist location
+# in the pose data.
 def move_data(pose_data, hand_data, right=False):
     landmark_name = "LEFT_WRIST"
     if right:
@@ -405,6 +400,97 @@ def move_data(pose_data, hand_data, right=False):
 
     return hand_data
 
+# Create the rotation matrix by using the normal vector of a plane span between
+# 2 vectors.
+def planeRotation(origin, point1, point2):
+
+    # Point in middle of 2 points
+
+    pinky_vec = point1 - origin
+    index_vec = point2 - origin
+    mid = 0.5 * pinky_vec + 0.5 * index_vec
+
+    y_n = mid.normalized()
+    z_n = pinky_vec.cross(index_vec).normalized()
+    x_n = y_n.cross(z_n)
+
+
+    M = Matrix([
+        [x_n[0], y_n[0], z_n[0], 0],
+        [x_n[1], y_n[1], z_n[1], 0],
+        [x_n[2], y_n[2], z_n[2], 0],
+        [0, 0, 0, 1.0]
+    ])
+
+    return M
+
+# Create the wrist rotations by using multiple landmark points.
+def wrist_rotations(hand_data, last_char="", sample_rate=1, target_rig="Armature", left=True):
+
+    # Read landmark data
+    wrist_data = []
+    pinky_data = []
+    index_data = []
+    for tupl in hand_data:
+        name, data = tupl
+        if name == "WRIST":
+            wrist_data = data
+        if name == "INDEX_FINGER_MCP":
+            index_data = data
+        if name == "PINKY_MCP":
+            pinky_data = data
+
+    # Calculate rotations
+    rotations = []
+    for idx, loc_wrist in enumerate(wrist_data):
+        loc_pink = pinky_data[idx]
+        loc_index = index_data[idx]
+
+        rot_matrix = planeRotation(Vector(loc_wrist), Vector(loc_pink), Vector(loc_index))
+
+        rotations.append(rot_matrix)
+
+    name = "WRIST_ROTATION" + last_char
+
+    # Create objects with that rotation
+    if(isObjectInScene(name) != True):
+        bpy.ops.mesh.primitive_ico_sphere_add(enter_editmode=False, radius=0.01)
+        bpy.context.object.name = name
+
+        # Have the counter start one before the sample rate,
+        # this way it will always animate the first frame.
+    counter = sample_rate - 1
+
+    for idx, rot in enumerate(rotations):
+
+        if(sample_rate > 1):
+            counter += 1
+            if counter == sample_rate:
+                counter = 0
+            else:
+                continue
+
+        if(rot[0][0]) == 0.0:
+            continue
+
+        print(rot)
+
+        obj = bpy.context.scene.objects[name]
+        obj.matrix_world = rot
+        obj.keyframe_insert(data_path='rotation_euler', frame=idx)
+
+    # Copy wrist rotation onto wrist of avatar.
+    if(left):
+        rotation_copy_constr = bpy.data.objects[target_rig].pose.bones["LeftHand"].constraints.new(type='COPY_ROTATION')
+        rotation_copy_constr.target = bpy.context.scene.objects[name]
+    else:
+        rotation_copy_constr = bpy.data.objects[target_rig].pose.bones["RightHand"].constraints.new(type='COPY_ROTATION')
+        rotation_copy_constr.target = bpy.context.scene.objects[name]
+
+
+
+
+# Head function that creates the animations onto the readyplayerme avatar from the csv files with mediapipe data.
 def create_animation (file_pose, file_left, file_right, name="", sample_rate=1, target_avatar="Armature"):
     # Create the arrays of data for the landmarks
     data_pose = csv_to_arrays(file_pose, target="pose")
@@ -422,6 +508,9 @@ def create_animation (file_pose, file_left, file_right, name="", sample_rate=1, 
     create_armature(name=f"armature", last_char= f"_{name}", target="pose")
     create_armature(name=f"armature", last_char= f"_{name}_r", target="hand")
     create_armature(name=f"armature", last_char= f"_{name}_l", target="hand")
+
+    wrist_rotations(data_left, last_char = f"_{name}_l", target_rig=target_avatar, left=True)
+    wrist_rotations(data_left, last_char = f"_{name}_r", target_rig=target_avatar, left=False)
 
     # TODO: Merge armatures
 

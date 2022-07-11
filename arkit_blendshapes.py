@@ -30,9 +30,10 @@ def animate_armature(file="", frame_step=1):
 
         for idx, val in enumerate(data):
             for shape_key in shape_keys:
-                key_block = shape_key.key_blocks[blendshape]
-                key_block.value = val
-                key_block.keyframe_insert("value", frame=idx)
+                key_block = shape_key.key_blocks.get(blendshape)
+                if(key_block):
+                    key_block.value = val
+                    key_block.keyframe_insert("value", frame=idx)
 
 
 
